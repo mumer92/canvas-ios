@@ -47,35 +47,85 @@ public struct APIAccountTermsOfService: Codable, Equatable {
 //  https://canvas.instructure.com/doc/api/users.html#method.users.create
 public struct PostAccountUserRequest: APIRequestable {
     public typealias Response = APIUser
-    let accountID: String
     public let method: APIMethod = .post
     public var path: String { "accounts/\(accountID)/users" }
     public var body: Body?
+    let baseURL: URL
+    let accountID: String
+    let pairingCode: String
+    let name: String
+    let email: String
+    let password: String
 
-    init(accountID: String, pairingCode: String, name: String, email: String, password: String) {
+    public init(baseURL: URL, accountID: String, pairingCode: String, name: String, email: String, password: String) {
+        self.baseURL = baseURL
         self.accountID = accountID
-        self.body = Body(
-            pseudonym: Body.Pseudonym(unique_id: email, password: password),
-            pairing_code: Body.PairingCode(code: pairingCode),
-            user: Body.User(name: name, initial_enrollment_type: "observer")
-        )
+
+        self.pairingCode = pairingCode
+        self.name = name
+        self.email = email
+        self.password = password
+//        self.body = Body(
+//            pseudonym: Body.Pseudonym(unique_id: email, password: password),
+//            pairing_code: Body.PairingCode(code: pairingCode),
+//            user: Body.User(name: name, initial_enrollment_type: "observer")
+//        )
     }
 
-    public struct Body: Encodable, Equatable {
-        public struct Pseudonym: Encodable, Equatable {
-            let unique_id: String
-            let password: String
+    public var query: [APIQueryItem] {
+        [
+            .value("user[initial_enrollment_type]", "observer"),
+            .value("pairing_code[code]", pairingCode),
+            .value("user[name]", name),
+            .value("pseudonym[unique_id]", email),
+            .value("pseudonym[password]", password),
+        ]
+    }
+
+//    public struct Body: Codable, Equatable {
+//        public struct Pseudonym: Codable, Equatable {
+//            let unique_id: String
+//            let password: String
+//        }
+//        public struct PairingCode: Codable, Equatable {
+//            let code: String
+//        }
+//        public struct User: Codable, Equatable {
+//            let name: String
+//            let initial_enrollment_type: String
+//        }
+//        let pseudonym: Pseudonym
+//        let pairing_code: PairingCode
+//        let user: User
+//    }
+
+    public func urlRequest(relativeTo baseURL: URL, accessToken: String?, actAsUserID: String?) throws -> URLRequest {
+        guard var components = URLComponents(string: path) else { throw APIRequestableError.invalidPath(path) }
+
+        if !path.hasPrefix("/") && components.host == nil {
+            components.path = "/api/v1/" + components.path
         }
-        public struct PairingCode: Encodable, Equatable {
-            let code: String
+
+        let queryItems = self.queryItems
+        if !queryItems.isEmpty {
+            components.queryItems = (components.queryItems ?? []) + queryItems
         }
-        public struct User: Encodable, Equatable {
-            let name: String
-            let initial_enrollment_type: String
+
+        guard let url = components.url(relativeTo: self.baseURL) else { throw APIRequestableError.cannotResolve(components, self.baseURL) }
+
+        var request: URLRequest
+        request = URLRequest(url: url, cachePolicy: cachePolicy)
+        request.httpMethod = method.rawValue.uppercased()
+
+        if let body = self.body {
+            request.httpBody = try encode(body)
+            request.setValue("application/json", forHTTPHeaderField: HttpHeader.contentType)
         }
-        let pseudonym: Pseudonym
-        let pairing_code: PairingCode
-        let user: User
+
+        request.setValue("application/json+canvas-string-ids", forHTTPHeaderField: HttpHeader.accept)
+        request.setValue(UserAgent.default.description, forHTTPHeaderField: HttpHeader.userAgent)
+
+        return request
     }
 }
 

@@ -31,8 +31,17 @@ class CreateAccountViewController: UIViewController {
     var keyboardSpace: NSLayoutConstraint = NSLayoutConstraint()
     var keyboard: KeyboardTransitioning?
     var selectedTextField: UITextField?
+    var baseURL: URL?
+    var accountID: String = ""
+    var pairingCode: String = ""
 
-    static func create() -> CreateAccountViewController { loadFromStoryboard() }
+    static func create(baseURL: URL, accountID: String, pairingCode: String) -> CreateAccountViewController {
+        let vc = loadFromStoryboard()
+        vc.baseURL = baseURL
+        vc.accountID = accountID
+        vc.pairingCode = pairingCode
+        return vc
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -80,6 +89,15 @@ class CreateAccountViewController: UIViewController {
 
     @IBAction func actionCreateAccount(_ sender: Any) {
         print("\(#function)")
+        baseURL = URL(string: "https://twilson.instructure.com")!
+        accountID = "1"
+        pairingCode = "0xf66x"
+        guard let baseURL = baseURL else { return }
+        let r = PostAccountUserRequest(baseURL: baseURL, accountID:  accountID, pairingCode: pairingCode, name: "john doe", email: "john@doe.com", password: "password")
+        AppEnvironment.shared.api.makeRequest(r) { (response, _, error) in
+            print("** error: \(error)")
+            print("** response: \(response)")
+        }
     }
 
     func keyboardDidChangeState(keyboardFrame: CGRect) {

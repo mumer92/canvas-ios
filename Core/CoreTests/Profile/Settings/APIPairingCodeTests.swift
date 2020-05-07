@@ -46,21 +46,45 @@ class APIAccountTermsOfServiceTests: CoreTestCase {
 }
 
 class PostAccountUserRequestTests: CoreTestCase {
+    let accountID = "1"
+    let email = "john@doe.com"
+    let password = "password"
+    let firstAndLastName = "john doe"
+    let code = "123"
+    let baseURL: URL = URL(string: "https://localhost")!
+
     func testPostAccountUserRequest() {
-        let accountID = "1"
-        let email = "john@doe.com"
-        let password = "password"
-        let name = "john doe"
-        let code = "123"
-        let r = PostAccountUserRequest(accountID: accountID, pairingCode: code, name: name, email: email, password: password)
+        let r = PostAccountUserRequest(baseURL: baseURL, accountID: accountID, pairingCode: code, name: firstAndLastName, email: email, password: password)
         XCTAssertEqual(r.path, "accounts/\(accountID)/users")
         XCTAssertEqual(r.method, .post)
         let body = PostAccountUserRequest.Body(
             pseudonym: PostAccountUserRequest.Body.Pseudonym(unique_id: email, password: password),
             pairing_code: PostAccountUserRequest.Body.PairingCode(code: code),
-            user: PostAccountUserRequest.Body.User(name: name, initial_enrollment_type: "observer")
+            user: PostAccountUserRequest.Body.User(name: firstAndLastName, initial_enrollment_type: "observer")
         )
 
         XCTAssertEqual(r.body, body)
+    }
+
+    func testUrlRequestConstruction() {
+        let r = PostAccountUserRequest(baseURL: baseURL, accountID: accountID, pairingCode: code, name: firstAndLastName, email: email, password: password)
+        XCTAssertEqual(r.path, "accounts/\(accountID)/users")
+        XCTAssertEqual(r.method, .post)
+        let expectedBody = PostAccountUserRequest.Body(
+            pseudonym: PostAccountUserRequest.Body.Pseudonym(unique_id: email, password: password),
+            pairing_code: PostAccountUserRequest.Body.PairingCode(code: code),
+            user: PostAccountUserRequest.Body.User(name: firstAndLastName, initial_enrollment_type: "observer")
+        )
+
+        let expectedURL = URL(string: "https://localhost/api/v1/accounts/1/users")!
+        let dummyURL = URL(string: "https://foo.instructure.com")!
+        let request = try? r.urlRequest(relativeTo: dummyURL, accessToken: nil, actAsUserID: nil)
+        XCTAssertEqual(request?.url?.host, baseURL.host)
+        XCTAssertEqual(request?.url, expectedURL)
+        XCTAssertEqual(request?.httpMethod, APIMethod.post.rawValue.uppercased())
+
+        let decoder = JSONDecoder()
+        let body = try? decoder.decode(PostAccountUserRequest.Body.self, from: request!.httpBody!)
+        XCTAssertEqual(body, expectedBody)
     }
 }
