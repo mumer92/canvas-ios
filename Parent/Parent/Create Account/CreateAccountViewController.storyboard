@@ -112,7 +112,7 @@
                                 </subviews>
                                 <constraints>
                                     <constraint firstItem="DoS-wG-moD" firstAttribute="trailing" secondItem="ozk-jV-mg5" secondAttribute="trailing" constant="16" id="6Jj-O8-UPW"/>
-                                    <constraint firstItem="ozk-jV-mg5" firstAttribute="top" secondItem="d5L-UO-jMO" secondAttribute="top" constant="76" id="MLI-kY-uOd"/>
+                                    <constraint firstItem="ozk-jV-mg5" firstAttribute="top" secondItem="d5L-UO-jMO" secondAttribute="top" constant="44" id="MLI-kY-uOd"/>
                                     <constraint firstItem="ozk-jV-mg5" firstAttribute="bottom" secondItem="d5L-UO-jMO" secondAttribute="bottom" id="pbC-p4-LvX"/>
                                     <constraint firstItem="ozk-jV-mg5" firstAttribute="leading" secondItem="DoS-wG-moD" secondAttribute="leading" constant="16" id="tgM-m4-kXz"/>
                                 </constraints>

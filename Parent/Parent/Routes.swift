@@ -140,7 +140,6 @@ let router = Router(routes: [
         return WrongAppViewController.create(delegate: loginDelegate)
     },
 
-
     RouteHandler(.createAccount(accountID: ":accountID", pairingCode: ":pairingCode")) { url, params in
         guard
             let queryItem = url.queryItems?.first,

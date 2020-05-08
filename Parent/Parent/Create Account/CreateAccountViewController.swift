@@ -19,7 +19,7 @@
 import UIKit
 import Core
 
-class CreateAccountViewController: UIViewController {
+class CreateAccountViewController: UIViewController, ErrorViewController {
     @IBOutlet weak var scrollView: UIScrollView!
     @IBOutlet weak var stackView: UIStackView!
     @IBOutlet weak var name: CreateAccountRow!
@@ -88,16 +88,53 @@ class CreateAccountViewController: UIViewController {
     }
 
     @IBAction func actionCreateAccount(_ sender: Any) {
-        print("\(#function)")
-        baseURL = URL(string: "https://twilson.instructure.com")!
-        accountID = "1"
-        pairingCode = "0xf66x"
         guard let baseURL = baseURL else { return }
-        let r = PostAccountUserRequest(baseURL: baseURL, accountID:  accountID, pairingCode: pairingCode, name: "john doe", email: "john@doe.com", password: "password")
-        AppEnvironment.shared.api.makeRequest(r) { (response, _, error) in
-            print("** error: \(error)")
-            print("** response: \(response)")
+        guard let fullname = name.textField.text, fullname.count > 2 else { rowInvalidShowError(row: name); return }
+        guard let userEmail = email.textField.text, !userEmail.isEmpty else { rowInvalidShowError(row: email); return }
+        guard let userPassword = password.textField.text, !userPassword.isEmpty else { rowInvalidShowError(row: password); return }
+
+        let request = PostAccountUserRequest(
+            baseURL: baseURL,
+            accountID: accountID,
+            pairingCode: pairingCode,
+            name: fullname,
+            email: userEmail,
+            password: userPassword
+        )
+        AppEnvironment.shared.api.makeRequest(request) { [weak self] (_, _, error) in
+            if let _ = error {
+                //  TODO: - handle errors
+                self?.showError(NSError.instructureError(NSLocalizedString("An error occurred", comment: "")))
+                return
+            }
+            self?.dismissCreateAccount()
         }
+    }
+
+    func rowInvalidShowError(row: CreateAccountRow) {
+        let rows = [name, email, password]
+        rows.forEach {
+            $0?.textField.layer.borderWidth = 1
+            $0?.textField.layer.cornerRadius = 4
+            $0?.textField.layer.borderColor = UIColor.named(.borderMedium).cgColor
+            $0?.errorLabel.text = nil
+        }
+
+        row.textField.layer.borderColor = UIColor.named(.borderDanger).cgColor
+
+        switch row {
+        case name: return
+            row.errorLabel.text = NSLocalizedString("Please enter full name", comment: "")
+        case email: return
+            row.errorLabel.text = NSLocalizedString("Please enter an email address", comment: "")
+        case password: return
+            row.errorLabel.text = NSLocalizedString("Password is required", comment: "")
+        default: return
+        }
+    }
+
+    func dismissCreateAccount() {
+        AppEnvironment.shared.router.dismiss(self)
     }
 
     func keyboardDidChangeState(keyboardFrame: CGRect) {

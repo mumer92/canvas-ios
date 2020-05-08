@@ -58,7 +58,7 @@ public class KeyboardTransitioning {
         UIView.animate(withDuration: animationDuration, delay: 0, options: .init(rawValue: animationCurve), animations: {
             space.constant = constant
             view.layoutIfNeeded()
-        }, completion: { [weak self] completed in
+        }, completion: { [weak self] _ in
             self?.callback?(keyboardFrame)
         })
     }
